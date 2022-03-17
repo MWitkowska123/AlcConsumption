@@ -1,0 +1,230 @@
+---
+title: "Untitled"
+author: "Maja Witkowska"
+date: "19 01 2022"
+output: html_document
+---
+
+```{r include = FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+dane <- read.csv(file="student-mat.csv",head=TRUE)
+```
+
+## Omówienie wybranych danych
+Dane które wykorzystałam w poniższym projekcie, pochodzą ze strony [kaggle](https://www.kaggle.com/uciml/student-alcohol-consumption) i zatytułowane są *Student Alcohol Consumption* Dane zostały uzyskane w badaniu uczniów matematyki i kursów języka portugalskiego w dwóch szkołach średnich. Wybrałam dane dotyczące uczniów matematyki. Zawiera on wiele ciekawych informacji. Szczegóły danych używane w analizie postanowiłam przybliżyć przy każdym wykresie.
+
+## Wykres 1
+Dane które wykorzystałam w tym punkcie, dotyczą tego kto jest opiekunem ucznia, oraz czy mieszka on wraz z drugim opiekunem dziecka, czy nie. Po połączeniu odpowiednich kolumn uzyskałam następujący wykres. 
+``` {r echo = F}
+Single <- dane %>%
+  select(Pstatus, guardian) %>%
+  group_by(guardian) %>%
+  count(Pstatus) %>%
+  mutate(Nazwa = paste(Pstatus,guardian))
+
+pie(Single$n, 
+    labels = (c( "samotny tata", "Niesamotny tata", "Samotna mama", "Niesamotna mama", "Inna osoba samotna", "Inna osoba niesamotna")),
+    col = rainbow(6),
+    main = "Porównanie proporcji rodzin pełnych i niepełnych")
+```
+  
+  Można zauważyć, że najczęściej dziećmi zajmują się mamy, które mieszkają razem z drugim opiekunem. W wypadku kiedy uczeń mieszka z jednym rodzicem, również znacznie częściej jest to mama.
+
+## Wykres 2
+Ze względu na małą ilość danych dotyczących samotnych rodziców, następny wykres wykonałam tylko na podstawie tego, czy opiekunem dziecka jest mama, czy tata. Wykluczyłam również opcję „Inne". Sprawdziłam jak edukacja rodzica, wpływa na oceny ucznia w ostatnim (trzecim) roku swojej edukacji. Skala portugalska ma zakres od 1 do 20, więc przekształcając odpowiednio dane, pokazałam jak by wyglądały w skali polskiej. W tabeli występowała również ocena 0, zazwyczaj oznaczała ona, że uczeń nie podszedł do egzaminu w danym roku, więc również postanowiłam ją usunąć.
+
+Edukacja rodziców została przedstawiona w tabeli w następny sposób:
+0 - brak wykształcenia - ta dana występowała tylko w 4 przypadkach, więc postanowiłam ją usunąć.
+
+1 - podstawowe (IV klasa)
+
+2 - podstawowe (V do IX klasy)
+
+3 - średnie
+
+4 - wyższe
+
+Wykresy różowe dotyczą matek, niebieskie ojców.
+
+```{r echo = FALSE}
+Mama <- dane %>%
+  filter(guardian == "mother", Medu != 0, G3 != 0) %>%
+  select(Medu, G3) %>%
+  ggplot(aes(x = G3, y = as.factor(Medu)),) + 
+    geom_boxplot(fill = "deeppink",
+               color = "deeppink3") +
+   xlim(0, 20)  + 
+            labs(title = "Skala portugalska",
+               caption = "Rysunek 1") +
+  xlab("Ocena ucznia") +
+  ylab("Wykształcenie matki") +
+  theme(
+  axis.title.x = element_text(size = 8),
+  axis.text.x = element_text(size = 6),
+  axis.title.y = element_text(size = 6))
+
+Tata <- dane %>%
+  filter(guardian == "father", G3 != 0) %>%
+  select(Fedu, G3) %>%
+  ggplot(aes(x = G3, y = as.factor(Fedu))) + 
+    geom_boxplot(fill = "deepskyblue",
+               color = "deepskyblue3") +
+   xlim(0, 20) + 
+            labs(title = "Skala portugalska",
+               caption = "Rysunek 2")+
+  xlab("Ocena ucznia") +
+  ylab("Wykształcenie ojca") +
+  theme(
+  axis.title.x = element_text(size = 8),
+  axis.text.x = element_text(size = 6),
+  axis.title.y = element_text(size = 6))
+
+MamaPL <- dane %>%
+  filter(guardian == "mother", Medu != 0, G3 != 0) %>%
+   mutate(Ocena3 = ifelse(G3 %in% c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"),1, ifelse(G3 %in% c("10", "11"),2,ifelse(G3 %in% c("12", "13"),3, ifelse(G3 %in% c("14", "15", "16"),4, ifelse(G3 %in% c("17", "18", "19"),5,6)))))) %>%
+  select(Medu, Ocena3) %>%
+  ggplot(aes(x = Ocena3, y = as.factor(Medu)),) + 
+    geom_boxplot(fill = "deeppink",
+               color = "deeppink3") +
+  xlim(1, 6)  + 
+            labs(title = "Skala polska",
+               caption ="Rysunek 3") +
+  xlab("Ocena ucznia") +
+  ylab("Wykształcenie matki")+
+  theme(
+  axis.title.x = element_text(size = 8),
+  axis.text.x = element_text(size = 6),
+  axis.title.y = element_text(size = 6))
+
+TataPL <- dane %>%
+  filter(guardian == "father", G3 != 0) %>%
+  mutate(Ocena3 = ifelse(G3 %in% c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"),1, ifelse(G3 %in% c("10", "11"),2,ifelse(G3 %in% c("12", "13"),3, ifelse(G3 %in% c("14", "15", "16"),4, ifelse(G3 %in% c("17", "18", "19"),5,6)))))) %>%
+  select(Fedu, Ocena3) %>%
+  ggplot(aes(x = Ocena3, y = as.factor(Fedu))) + 
+    geom_boxplot(fill = "deepskyblue",
+               color = "deepskyblue3") +
+  xlim(1, 6) + 
+            labs(title = "Skala polska",
+               caption ="Rysunek 4") +
+  xlab("Ocena ucznia") +
+  ylab("Wykształcenie ojca")+
+  theme(
+  axis.title.x = element_text(size = 8),
+  axis.text.x = element_text(size = 6),
+  axis.title.y = element_text(size = 6))
+
+grid.arrange(Mama, Tata, MamaPL, TataPL, nrow=2, ncol=2)
+```
+  
+  Można zauważyć, że przy wykształceniu podstawowym (Klasa IV), lepsze wyniki uzyskują dzieci, których opiekunem jest ojciec, oraz w wypadku kiedy rodzic ma wyższe wykształcenie. Ciekawe jest również to, że w wypadku kiedy ojciec ma wykształcenie średnie, dzieci średnio uzyskują niższe wyniki, niż w sytuacji, kiedy ma on wykształcenie podstawowe.
+Większe różnice można zauważyć w skali portugalskiej, niż w polskiej (ze względu na większą skalę ocen).
+
+## Wykres 3
+Postanowiłam narysować wykres, który ukazuje, jakie oceny uczniowie uzyskiwali w poszczególnych latach edukacji. W danych są podane oceny z 3 lat edukacji.
+```{r echo = F}
+Ilosc1 <- dane %>%
+  select(G1) %>%
+  group_by(G1) %>%
+  count(G1)%>%
+  ggplot(aes(x= G1, y= n)) +
+  ylim(0, 50) + 
+  xlab("Oceny w roku 1") +
+  ylab("Ilośc ocen")+
+  geom_col()
+  
+Ilosc2 <-dane %>%
+    select(G2) %>%
+    group_by(G2) %>%
+    count(G2) %>%
+  ggplot(aes(x= G2, y= n)) +
+   ylim(0, 50) + 
+    xlab("Oceny w roku 2") +
+  ylab("Ilośc ocen")+
+  geom_col() 
+  
+Ilosc3 <- dane %>%
+      select(G3) %>%
+      group_by(G3) %>%
+      count(G3) %>%
+  ggplot(aes(x= G3, y= n)) +
+  ylim(0, 50) + 
+  xlab("Oceny w roku 3") +
+  ylab("Ilośc ocen")+
+  geom_col() 
+
+grid.arrange(Ilosc1, Ilosc2, Ilosc3, nrow=1, ncol=3)
+
+```
+  
+  Można zauważyć, że z roku na rok, coraz więcej studentów nie podchodziło do egzaminu (wartość 0).
+
+## Wykres 4
+Następny wykres pokazuje czy to, czy to jaką płeć ma opiekun, oraz czy mieszka sam wpływa, na to jakie różnice między 1 a 3 rokiem osiągają uczniowie (Aby to sprawdzić, stworzyłam nową kolumnę).
+```{r, echo=FALSE}
+mameczkiAlone <- dane %>%
+  select(G3, G1, Pstatus, guardian) %>%
+  mutate(G3.1 = G3 - G1) %>%
+  mutate(GuardianPstatus = paste(Pstatus, guardian)) %>%
+  select(-c(guardian, Pstatus, G1, G3))
+
+mamkeczkidaneczki <- mameczkiAlone %>%
+  group_by(G3.1) %>%
+  count(GuardianPstatus)
+
+  
+mamkeczkidaneczki %>%
+  ggplot() +
+  geom_point(mapping = aes(x = G3.1, y = GuardianPstatus, col = as.factor(n)), size = 2) +
+  scale_color_discrete(name = "Liczba") +
+  xlab("Różnica ocen między 3 a 1 rokiem") +
+  ylab("Status rodzica zajmującego się dzieckiem")
+
+```
+  
+  Bardzo duża rozpiętość wyników znajduje się po lewej stronie od 0 (dane uwzględniają osoby, które w 3 semestrze uzyskały ocenę 0, a więc nie podeszły do egzaminu). Największa różnica to 4 stopnie, co mnie dość zaskoczyło (Spodziewałam się większej różnicy).
+
+## Wykres 5
+Kolejny wykres pokazuje, jakie uzyskali oceny studenci w 1 roku (oś OX) oraz studenci w 3 roku (oś OY).
+```{r echo = F}
+dane %>%
+  select(G1, G3) %>%
+  group_by(G1) %>%
+  count(G3) %>%
+  ggplot() +
+  geom_point(mapping = aes(x = G1, y = G3, col = as.factor(n), size = 1.75)) +
+  xlim(c(0,20)) +
+  ylim(c(0,20)) +
+  scale_color_discrete(name = "Liczba") +
+  xlab("Ocena w roku 1") +
+  ylab("Ocena w roku 3")
+```
+  
+  Jak widać, dane te są w miarę proporcjonalne, tzn. jeżeli uzyskał on dobrą ocenę w roku 1, uzyskał on również dobrą ocenę w roku 3. Wyjątkiem oczywiście są uczniowie, którzy niepodeszli do egzaminu.
+
+## Wykres 6
+Jako iż dane są zatytułowane „Student Alcohol Consumption” ostatnie wykresy będą pokazywać jak wpływa na ilość spożytego alkoholu relacja z rodzicami. Z tego, co zrozumiałam i dane związane z konsumpcją alkoholu i ocena stopnia relacji jest subiektywną oceną ucznia.
+Uczniowie mieli odpowiedzieć na pytania, jak często spożywają alkohol w tygodniu oraz w weekendy, w skali od 1 do 5, gdzie 1 to bardzo rzadko, a 5 bardzo często. Postanowiłam zsumować te dane. Relacja z rodzicami była badana w podobny sposób (skala od 1 do 5, gdzie 1 to bardzo zła, a 5 bardzo dobra).
+
+```{r echo=FALSE}
+ostatniedaneczki <- dane %>%
+  select(Dalc, famrel, Walc) %>%
+  mutate(ALC = Dalc + Walc) %>%
+  select(-c(Walc, Dalc))
+
+ostatniedane <- ostatniedaneczki %>%
+  group_by(famrel) %>%
+  count(ALC) 
+
+ostatniedane %>%
+  ggplot() +
+  geom_point(mapping = aes(x = ALC, y = n))+
+  facet_grid(.~famrel) +
+  xlab("Ocena częstości sporzywania    alkocholu") +
+  ylab("Ilość przypadków") +
+  labs(title = "Ocena relacji z rodzicami")
+```
+  
+  Gdy zdecydowałam się na narysowanie tych wykresów, spodziewałam się, że im gorsza relacja z rodzicami, tym częściej uczniowie sięgają po alkohol, jednak takich obserwacji jest bardzo mało. Widać, że w grupie gdzie relacje są ocenione na 3+, większość uczniów ocenia swoje spożycie alkoholu na dość niskie.
