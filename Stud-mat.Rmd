@@ -50,7 +50,7 @@ Edukacja rodziców została przedstawiona w tabeli w następny sposób:
 Wykresy różowe dotyczą matek, niebieskie ojców.
 
 ```{r echo = FALSE}
-Mama <- dane %>%
+Mom <- dane %>%
   filter(guardian == "mother", Medu != 0, G3 != 0) %>%
   select(Medu, G3) %>%
   ggplot(aes(x = G3, y = as.factor(Medu)),) + 
@@ -66,7 +66,7 @@ Mama <- dane %>%
   axis.text.x = element_text(size = 6),
   axis.title.y = element_text(size = 6))
 
-Tata <- dane %>%
+Dad <- dane %>%
   filter(guardian == "father", G3 != 0) %>%
   select(Fedu, G3) %>%
   ggplot(aes(x = G3, y = as.factor(Fedu))) + 
@@ -82,7 +82,7 @@ Tata <- dane %>%
   axis.text.x = element_text(size = 6),
   axis.title.y = element_text(size = 6))
 
-MamaPL <- dane %>%
+MomPL <- dane %>%
   filter(guardian == "mother", Medu != 0, G3 != 0) %>%
    mutate(Ocena3 = ifelse(G3 %in% c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"),1, ifelse(G3 %in% c("10", "11"),2,ifelse(G3 %in% c("12", "13"),3, ifelse(G3 %in% c("14", "15", "16"),4, ifelse(G3 %in% c("17", "18", "19"),5,6)))))) %>%
   select(Medu, Ocena3) %>%
@@ -99,7 +99,7 @@ MamaPL <- dane %>%
   axis.text.x = element_text(size = 6),
   axis.title.y = element_text(size = 6))
 
-TataPL <- dane %>%
+DadPL <- dane %>%
   filter(guardian == "father", G3 != 0) %>%
   mutate(Ocena3 = ifelse(G3 %in% c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"),1, ifelse(G3 %in% c("10", "11"),2,ifelse(G3 %in% c("12", "13"),3, ifelse(G3 %in% c("14", "15", "16"),4, ifelse(G3 %in% c("17", "18", "19"),5,6)))))) %>%
   select(Fedu, Ocena3) %>%
@@ -116,7 +116,7 @@ TataPL <- dane %>%
   axis.text.x = element_text(size = 6),
   axis.title.y = element_text(size = 6))
 
-grid.arrange(Mama, Tata, MamaPL, TataPL, nrow=2, ncol=2)
+grid.arrange(Mom, Dad, MomPL, DadPL, nrow=2, ncol=2)
 ```
   
   Można zauważyć, że przy wykształceniu podstawowym (Klasa IV), lepsze wyniki uzyskują dzieci, których opiekunem jest ojciec, oraz w wypadku kiedy rodzic ma wyższe wykształcenie. Ciekawe jest również to, że w wypadku kiedy ojciec ma wykształcenie średnie, dzieci średnio uzyskują niższe wyniki, niż w sytuacji, kiedy ma on wykształcenie podstawowe.
@@ -164,18 +164,18 @@ grid.arrange(Ilosc1, Ilosc2, Ilosc3, nrow=1, ncol=3)
 ## Wykres 4
 Następny wykres pokazuje czy to, czy to jaką płeć ma opiekun, oraz czy mieszka sam wpływa, na to jakie różnice między 1 a 3 rokiem osiągają uczniowie (Aby to sprawdzić, stworzyłam nową kolumnę).
 ```{r, echo=FALSE}
-mameczkiAlone <- dane %>%
+MomAlone <- dane %>%
   select(G3, G1, Pstatus, guardian) %>%
   mutate(G3.1 = G3 - G1) %>%
   mutate(GuardianPstatus = paste(Pstatus, guardian)) %>%
   select(-c(guardian, Pstatus, G1, G3))
 
-mamkeczkidaneczki <- mameczkiAlone %>%
+MomAlone2 <- MomAlone %>%
   group_by(G3.1) %>%
   count(GuardianPstatus)
 
-  
-mamkeczkidaneczki %>%
+
+MomAlone2 %>%
   ggplot() +
   geom_point(mapping = aes(x = G3.1, y = GuardianPstatus, col = as.factor(n)), size = 2) +
   scale_color_discrete(name = "Liczba") +
@@ -209,16 +209,16 @@ Jako iż dane są zatytułowane „Student Alcohol Consumption” ostatnie wykre
 Uczniowie mieli odpowiedzieć na pytania, jak często spożywają alkohol w tygodniu oraz w weekendy, w skali od 1 do 5, gdzie 1 to bardzo rzadko, a 5 bardzo często. Postanowiłam zsumować te dane. Relacja z rodzicami była badana w podobny sposób (skala od 1 do 5, gdzie 1 to bardzo zła, a 5 bardzo dobra).
 
 ```{r echo=FALSE}
-ostatniedaneczki <- dane %>%
+Relation <- dane %>%
   select(Dalc, famrel, Walc) %>%
   mutate(ALC = Dalc + Walc) %>%
   select(-c(Walc, Dalc))
 
-ostatniedane <- ostatniedaneczki %>%
+Relation2 <- Relation %>%
   group_by(famrel) %>%
   count(ALC) 
 
-ostatniedane %>%
+Relation2 %>%
   ggplot() +
   geom_point(mapping = aes(x = ALC, y = n))+
   facet_grid(.~famrel) +
